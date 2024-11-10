@@ -1,25 +1,22 @@
 [workspace]
 resolver = "2"
-members = ["crates/pocket_gui"]
+members = ["crates/pocket_gui", "crates/pocket_minimal", "crates/pocket_template"]
 
 [workspace.package]
 edition = "2021"
 license = "MIT OR Apache-2.0"
 rust-version = "1.77"
-version = "0.29.1"
+version = "0.1.0"
 
 
 [profile.release]
-# lto = true # VERY slightly smaller wasm
+# lto = true      # VERY slightly smaller wasm
 # opt-level = 's' # 10-20% smaller wasm compared to `opt-level = 3`
-# opt-level = 1 # very slow and big wasm. Don't do this.
-opt-level = 2 # fast and small wasm, basically same as `opt-level = 's'`
-# opt-level = 3 # unnecessarily large wasm for no performance gain
-
-# debug = true # include debug symbols, useful when profiling wasm
-
-panic = "abort" # This leads to better optimizations and smaller binaries (and is the default in Wasm anyways).
-
+# opt-level = 1   # very slow and big wasm. Don't do this.
+opt-level = 2     # fast and small wasm, basically same as `opt-level = 's'`
+# opt-level = 3   # unnecessarily large wasm for no performance gain
+# debug = true    # include debug symbols, useful when profiling wasm
+panic = "abort"   # This leads to better optimizations and smaller binaries (and is the default in Wasm anyways).
 
 [profile.dev]
 # Can't leave this on by default, because it breaks the Windows build. Related: https://github.com/rust-lang/cargo/issues/4897

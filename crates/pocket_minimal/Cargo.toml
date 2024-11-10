@@ -1,0 +1,34 @@
+[package]
+name         = "pocket_minimal"
+version      = "0.1.0"
+authors      = ["Katherine Eaton <ktmeaton@gmail.com>"]
+edition      = "2021"
+include      = ["LICENSE-APACHE", "LICENSE-MIT", "**/*.rs", "Cargo.toml"]
+rust-version = "1.77"
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--generate-link-to-definition"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default     = ["glow", "persistence"]
+glow        = ["eframe/glow"]
+persistence = ["eframe/persistence", "egui/persistence", "serde"]
+
+[dependencies]
+eframe   = { version = "0.29.1", default-features = true,   features = ["web_screen_reader"] }
+egui     = { version = "0.29.1", default-features = false,  features = ["accesskit", "callstack", "default_fonts", "log"]  }
+log      = { version = "0.4",    default-features = false,  features = ["std"] }
+serde    = { version = "1",      default-features = false,  features = ["derive"], optional = true }
+
+# web:
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen         = { version = "=0.2.93", default-features = false }
+wasm-bindgen-futures = { version = "0.4",     default-features = false }
+web-sys              = { version = "0.3.70",  default-features = false } 

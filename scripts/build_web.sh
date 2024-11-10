@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
-set -eu
+set -e
 script_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 cd "$script_path/.."
 
-./scripts/setup_web.sh
-
-CRATE_NAME="pocket_gui"
-
-FEATURES="web_app"
+# Setup web
+rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.93
 
 OPEN=false
+FEATURES=""
 OPTIMIZE=false
 BUILD=debug
 BUILD_FLAGS=""
@@ -19,7 +18,11 @@ WASM_OPT_FLAGS="-O2 --fast-math"
 while test $# -gt 0; do
   case "$1" in
     -h|--help)
-      echo "build_demo_web.sh [--release] [--webgpu] [--open]"
+      echo "build_web.sh [--release] [--webgpu] [--open] --crate CRATE --prefix PREFIX"
+      echo ""
+      echo "  --crate:   Crate to build."
+      echo ""
+      echo "  --prefix:    Output prefix."
       echo ""
       echo "  -g:        Keep debug symbols even with --release."
       echo "             These are useful profiling and size trimming."
@@ -33,6 +36,18 @@ while test $# -gt 0; do
       echo "             The resulting binary will automatically use WebGPU if available and"
       echo "             fall back to a WebGL emulation layer otherwise."
       exit 0
+      ;;
+
+    --crate)
+      CRATE=$2
+      shift
+      shift
+      ;;
+
+    --prefix)
+      PREFIX=$2
+      shift
+      shift
       ;;
 
     -g)
@@ -63,28 +78,24 @@ while test $# -gt 0; do
   esac
 done
 
-OUT_FILE_NAME="pocket"
+if [[ -z $CRATE ]];  then echo "Crate must be specified with --crate."; exit 1; fi
+if [[ -z $PREFIX ]]; then echo "Prefix must be specified with --prefix."; exit 1; fi
+if [[ "$FEATURES" != "" ]]; then BUILD_FLAGS="${BUILD_FLAGS} --features $FEATURES"; fi
 
-if [[ "${WGPU}" == true ]]; then
-  FEATURES="${FEATURES},wgpu"
-else
-  FEATURES="${FEATURES},glow"
-fi
-
-FINAL_WASM_PATH=site/${OUT_FILE_NAME}_bg.wasm
+FINAL_WASM_PATH=site/${PREFIX}_bg.wasm
 
 # Clear output from old stuff:
 rm -f "${FINAL_WASM_PATH}"
 
 echo "Building rust…"
 
-(cd crates/$CRATE_NAME &&
+(cd crates/$CRATE &&
+  pwd &&
   cargo build \
     ${BUILD_FLAGS} \
     --lib \
     --target wasm32-unknown-unknown \
-    --no-default-features \
-    --features ${FEATURES}
+    --no-default-features
 )
 
 # Get the output directory (in the workspace it is in another location)
@@ -92,9 +103,9 @@ echo "Building rust…"
 TARGET="target"
 
 echo "Generating JS bindings for wasm…"
-TARGET_NAME="${CRATE_NAME}.wasm"
+TARGET_NAME="${CRATE}.wasm"
 WASM_PATH="${TARGET}/wasm32-unknown-unknown/$BUILD/$TARGET_NAME"
-wasm-bindgen "${WASM_PATH}" --out-dir site --out-name ${OUT_FILE_NAME} --no-modules --no-typescript
+wasm-bindgen "${WASM_PATH}" --out-dir site --out-name ${PREFIX} --no-modules --no-typescript
 
 # if this fails with "error: cannot import from modules (`env`) with `--no-modules`", you can use:
 # wasm2wat target/wasm32-unknown-unknown/release/pocket.wasm | rg env
