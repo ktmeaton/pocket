@@ -1,9 +1,11 @@
 use egui::Ui;
-use egui::collapsing_header::{CollapsingState, HeaderResponse, paint_default_icon};
+use egui::collapsing_header::CollapsingState;
 
-pub struct About {
+pub struct About
+{
     table_of_contents: Tree,
-    selected: String
+    selected: String,
+    article: Box<dyn Fn(&mut Ui)>,
 }
 
 impl About {
@@ -23,7 +25,8 @@ impl Default for About {
     fn default() -> Self {
         Self {
             table_of_contents: About::create_table_of_contents(),
-            selected: "Body".to_string()
+            selected: "Table of Contents".to_string(),
+            article: Box::new(|ui| {ui.heading("Table of Contents");}),
         }
     }
 }
@@ -42,9 +45,9 @@ impl eframe::App for About {
                 let (show_root, default_depth) = (false, 1);
                 self.selected = self.table_of_contents.ui(ui, show_root, default_depth, &self.selected);
             });
-        // Central Panel: Articles
+        // // Central Panel: Articles
         // egui::CentralPanel::default()
-        //     .show(ctx, |ui| { self.about.ui(ui); });
+        //     .show(ctx, *self.article );
     }
 }
 
@@ -112,10 +115,10 @@ impl Tree {
         }
 
         // Create a new collapsing element
-        let mut state = CollapsingState::load_with_default_open(
+        let state = CollapsingState::load_with_default_open(
             ui.ctx(), 
             ui.make_persistent_id(format!("tree_{name}")), 
-            depth <= 1
+            depth < default_depth
         );
 
         // THIS WORKS BELOW! BUT WE WANT: CUSTOM ICONS AND DEFAULT OPEN/CLOSE
