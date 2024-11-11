@@ -1,33 +1,85 @@
 use egui::Ui;
 use egui::collapsing_header::CollapsingState;
+use std::collections::BTreeMap;
+
+pub struct Article {
+    title: String,
+    ui: Box<dyn Fn(&mut Ui)>,
+    parent: String,
+    children: Vec<Article>
+}
+
+impl Default for Article {
+    fn default() -> Self {
+        Self {
+            title: String::new(),
+            ui: Box::new(|ui: &mut Ui| {}),
+            parent: String::new(),
+            children: Vec::new(),
+        }
+    }
+}
 
 pub struct About
 {
     table_of_contents: Tree,
     selected: String,
-    article: Box<dyn Fn(&mut Ui)>,
+    articles: BTreeMap<String, Article>,
 }
 
 impl About {
-    fn create_table_of_contents() -> Tree {
-        let mut tree = Tree::new("Table of Contents", vec![]);
-        tree.add_child("Section 1", "Table of Contents");
-        tree.add_child("Section 1.1", "Section 1");
-        tree.add_child("Section 1.1.1", "Section 1.1");
-        tree.add_child("Section 1.2", "Section 1");
-        tree.add_child("Section 2", "Table of Contents");
-        tree.add_child("Section 2.1", "Section 2");
-        tree
+    fn table_of_contents(&self) -> Tree {
+        let mut toc = Tree::new("Table of Contents", vec![]);
+        self.articles.iter().for_each(|(title, article)| {
+            toc.add_child(title, &article.parent)
+        });
+        toc
     }
 }
 
 impl Default for About {
     fn default() -> Self {
-        Self {
-            table_of_contents: About::create_table_of_contents(),
+
+        let mut about = Self {
+            table_of_contents: Tree::new("Table of Contents", vec![]),
             selected: "Table of Contents".to_string(),
-            article: Box::new(|ui| {ui.heading("Table of Contents");}),
-        }
+            articles: BTreeMap::new()
+        };
+
+        // Section 1
+        let (title, parent) = ("Section 1".to_string(), "Table of Contents".to_string());
+        let mut article = Article { title: title.clone(), parent, ..Default::default() };
+        article.ui = Box::new(move |ui: &mut Ui| {
+            ui.heading(&title);
+            ui.separator();
+            ui.label(format!("This is an article about {title}."));
+        });
+        about.articles.insert(article.title.clone(), article);
+
+        // Section 1.1
+        let mut article = Article {
+            title:  "Section 1.1".to_string(),
+            parent: "Section 1".to_string(),
+            children: vec![],
+            ui: Box::new(|ui: &mut Ui| {
+                ui.heading("Section 1.1");
+                ui.separator();
+                ui.label(format!("This is an article about Section 1.1."));
+            })
+        };
+        about.articles.insert(article.title.clone(), article);
+
+        // Section 1.1
+        let mut article = Article {
+            title:  "Section 1.1.1".to_string(),
+            parent: "Section 1.1".to_string(),
+            .. Default::default()
+        };
+        about.articles.insert(article.title.clone(), article);
+
+        about.table_of_contents = about.table_of_contents();
+
+        return about
     }
 }
 
@@ -45,9 +97,12 @@ impl eframe::App for About {
                 let (show_root, default_depth) = (false, 1);
                 self.selected = self.table_of_contents.ui(ui, show_root, default_depth, &self.selected);
             });
-        // // Central Panel: Articles
-        // egui::CentralPanel::default()
-        //     .show(ctx, *self.article );
+        // Central Panel: Articles
+        egui::CentralPanel::default().show(ctx, |ui| {
+            if let Some(article) = self.articles.get(&self.selected) {
+                (article.ui)(ui)
+            }
+        });
     }
 }
 
@@ -72,7 +127,6 @@ impl Tree {
         } else {
             self.children.iter_mut().for_each(|c| {c.add_child(child, parent)});
         }
-
     }
 
     pub fn new(root: &str, children: Vec<&str>) -> Self {
