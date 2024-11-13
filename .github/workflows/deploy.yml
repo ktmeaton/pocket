@@ -52,7 +52,7 @@ jobs:
 
       - name: Build
         run: |
-          scripts/build_web.sh --release
+          scripts/build_web.sh --crate pocket_minimal --prefix pocket --release
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
