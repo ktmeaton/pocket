@@ -29,7 +29,6 @@ impl eframe::App for Game {
 enum View {
     About,
     Game,
-    BackendPanel,
 }
 
 impl View {

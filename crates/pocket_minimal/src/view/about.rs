@@ -10,7 +10,7 @@ pub struct Article {
     title: String,
     content: Box<dyn Fn(&mut Ui)>,
     parent: String,
-    children: Vec<Article>
+    //children: Vec<Article>
 }
 
 impl Default for Article {
@@ -19,7 +19,7 @@ impl Default for Article {
             title: String::new(),
             content: Box::new(|_| {}),
             parent: String::new(),
-            children: Vec::new(),
+            //children: Vec::new(),
         }
     }
 }
