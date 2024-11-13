@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/pocket_gui", "crates/pocket_minimal", "crates/pocket_template"]
+members = ["crates/pocket_gui", "crates/pocket_minimal"]
 
 [workspace.package]
 edition = "2021"
